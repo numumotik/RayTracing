@@ -146,7 +146,34 @@ namespace lab6
             scene.Add(figure);
             sceneBox.Items.Add("SPHERE2");
 
-           figure = new Polyhedron();
+            figure = new Polyhedron();
+            figure.make_sphere(new Point3d(-1, 8, 3), 0.5f);
+            figure.color = Color.LightPink;
+            figure.specular = 500;
+            figure.reflective = 0f;
+            figure.transparent = 0.7f;
+            scene.Add(figure);
+            sceneBox.Items.Add("SPHERE3");
+
+            figure = new Polyhedron();
+            figure.make_sphere(new Point3d(1, 8, 1), 0.5f);
+            figure.color = Color.LightSkyBlue;
+            figure.specular = 500;
+            figure.reflective = 0f;
+            figure.transparent = 0.7f;
+            scene.Add(figure);
+            sceneBox.Items.Add("SPHERE4");
+
+            figure = new Polyhedron();
+            figure.make_sphere(new Point3d(4, 8, 5), 0.5f);
+            figure.color = Color.Lime;
+            figure.specular = 500;
+            figure.reflective = 0f;
+            figure.transparent = 0.7f;
+            scene.Add(figure);
+            sceneBox.Items.Add("SPHERE5");
+
+            figure = new Polyhedron();
             figure.make_hexahedron(1f);
             figure.translate(0, 0, 3);
             figure.color = Color.YellowGreen;
@@ -383,12 +410,42 @@ namespace lab6
 
             //добавить прозрачность
             //допустим, что луч не преломляется
-            var tr_color = TraceRay(point, D, eps, inf, depth * closest.transparent, step+1);
+            //index of refraction - 1.5
+            var refracted = refract(D, normal, 1.5f);
+            var tr_color = TraceRay(point, refracted, eps, inf, depth * closest.transparent, step + 1); 
+            //допустим, что луч не преломляется
+            /*var tr_color = TraceRay(point, D, eps, inf, depth * closest.transparent, step+1);*/
             Color transp = sum(increase(1-closest.transparent, reflected), increase(closest.transparent, tr_color));
-
             return increase(depth,transp);
         }
 
+        public float clamp(float value, float min, float max)
+        {
+            return (value < min) ? min : (value > max) ? max : value;
+        }
+
+        private Point3d refract(Point3d I, Point3d N, float ior)
+        {
+            Point3d res = new Point3d(0, 0, 0);
+
+            float cosi = clamp(-1, 1, dot(I, N));
+            float etai = 1, etat = ior;
+            Point3d n = new Point3d(N.X, N.Y, N.Z);
+            if (cosi < 0) {
+                cosi = -cosi;
+            } else {
+                etai = ior;
+                etat = 1;
+                n = new Point3d(-N.X, -N.Y, -N.Z);
+            }
+            float eta = etai / etat;
+            float k = 1 - eta * eta * (1 - cosi * cosi);
+            if (k < 0)
+                return res;
+
+            return add(multiply(eta,I), multiply((float)(eta * cosi - Math.Sqrt(k)), n));
+            
+        }
         private Point3d ComputeLighting(Point3d point, Point3d normal, Point3d view, float specular)
         {
             Point3d intensity = new Point3d(0,0,0);
